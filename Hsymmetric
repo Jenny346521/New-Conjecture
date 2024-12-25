@@ -1,0 +1,105 @@
+
+with(combinat):
+
+#############: Generating complete homogeneous symmetric polynomials H(n, a) in n variables
+
+H:=proc(n, a)
+local m,sa,ha,Ha,ca;
+       m  := nops(a);
+       sa := [seq(Hsymnd(n,a[j])[2],j=1..m)];
+       ca := [seq(Hsymnd(n,a[j])[1],j=1..m)];
+       ha := product(sa[i],i=1..m);
+       Ha := ha/eval(ha,[seq(x[i]=1,i=1..n)]);
+end:
+
+Hsymnd := proc(n,d)
+local ch,s1,es,hf;
+      ch := composition(n+d, n); 
+      s1 := [seq(1, t = 1 .. n)];
+      es := [seq(ch[t]-s1, t = 1 .. nops(ch))];
+      hf := [nops(ch),add(product(x[i]^e[i], i = 1 .. n), e = es)];
+end: 
+
+
+############: n-partition with at most d non-zero elements
+      
+Hnd := proc(n,d)
+local ch,s1,es;
+      ch := composition(n+d, n); 
+      s1 := [seq(1, t = 1 .. n)];
+      es := [seq(ch[t]-s1, t = 1 .. nops(ch))]; 
+      [op(convert(map(sort,%,`>`),set))];
+end: 
+
+#############: Determine whether there is a Majorization relationship for vectors a and b.  input L=[a,b]
+
+Maj := proc(L)
+local n,sL1,sL2,a,b;
+    a:=L[1];
+    b:=L[2];
+    n:=nops(a);
+    sL1:=map(signum,[seq(sum(a[i]-b[i], i = 1 .. j), j = 1 .. n)]);
+    if has(-1,sL1)=false then return(true) fi;
+    sL2:=map(signum,[seq(sum(b[i]-a[i], i = 1 .. j), j = 1 .. n)]);
+    if has(-1,sL2)=false then return(true) fi;
+    return(false)
+end:
+
+###########: Calculate all non-Majorization pairs for n-partition
+
+nMaj := proc(n)
+local pt,cp,K,s,J,nc;
+    pt := Hnd(n,n);
+    cp := choose(pt,2);
+    nc := nops(cp);
+    K  := [];
+    for s to nc do J[s] := Maj(cp[s]); 
+        if J[s] = false then K := [op(K), cp[s]] fi;
+    od;
+    K;
+end:
+
+###########: check the co-positivity of Hnmu(t,...,t,1,...,1)-Hnlambda(t,...,t,1,...,1)
+
+Check_RHS := proc(H,n)
+local ti,Hx,TF,u;
+   ti :=time();
+   for u to n-1 do
+       Hx:=subs([seq(x[i] =X, i = 1 .. u), seq(x[i] = 1, i = u .. n)], H);
+       if Hx<>0 then TF:=check_inequal(Hx) fi;
+       if TF[1]=false then return(false,`time`=time()-ti) fi;
+   od;
+   #print(time()-ti);
+return(true,`time`=time()-ti);
+end:
+
+############: main program, input: time (s) 
+    
+Mainproc := proc(time_limit,nvar_limit)
+local t,t1,deg,L,M,Te,nL,nvar,K,j1,H12,T,N,var,RHS,LHS;
+     t :=time();
+     for deg from 6 to 1000000 do
+printf("\n ================================================================\n degree = %-4d\n",deg);
+         M    := nMaj(deg);
+         L    := [seq(op(permute(M[i])), i = 1 .. nops(M))];
+         nL   := nops(L);
+         if nL=0 then print(true,  time()-t) fi; 
+         for j1 to nL do 
+              Te := L[j1]; print(evaln(mu)=Te[1], evaln(lambda)=Te[2]);
+              for nvar from 2 to nvar_limit do 
+                   t1  := time();
+                   H12 := H(nvar, Te[1])-H(nvar, Te[2]);
+                   var := [op(indets(H12))];
+                   RHS   := Check_RHS(H12, nvar); 
+                   LHS   := check_inequal(H12); 
+                   if RHS[1]=LHS[1] then  
+				      printf("  #vars= %2d   claim is true    time = %5.3f sec    total_time_so_far = %6.3f sec\n", nvar, time()-t1, time()-t);
+                   elif RHS[1]<>LHS[1] then 
+				      return(false, time()-t, conter-example [nvar, Te]);
+                   fi;
+             if time()-t>=time_limit then return("No counter-example found so far") fi;
+            od;
+         od;
+     od; 
+end:
+
