@@ -4,5 +4,5 @@ The maple file "VerifyConjecture.mw" is a worksheet for checking Conjecture 12 i
 To run "VerifyConjecture.mw", you need to download "Hsymmetric" and "tsds6", and make sure that all 
 three files are in the same folder. 
 
-"Hsymmetric" is for generating complete homogeneous symmetric polynomials H(n, a) in n variables. 
-"tsds6" is a tool for decisiding nonnegativity of polynomials by using difference substitution method.
+"Hsymmetric" generates complete homogeneous symmetric polynomials H(n, a) in n variables. 
+"tsds6" determines nonnegativity of polynomials by using the difference substitution method.
